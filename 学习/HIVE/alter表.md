@@ -5,3 +5,5 @@ alter table replace columns(...
 这种alter语句可以替换所有的列，符合ras-api的编辑表方法
 ex.
 alter table test replace columns(a int)
+
+注意，alter表，必须先user 数据库，否则会报错
