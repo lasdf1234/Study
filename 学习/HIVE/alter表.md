@@ -6,4 +6,4 @@ alter table replace columns(...
 ex.
 alter table test replace columns(a int)
 
-注意，alter表，必须先user 数据库，否则会报错
+注意，alter表，必须先use 数据库，否则会报错
