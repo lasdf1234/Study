@@ -1,0 +1,7 @@
+ALTER表
+https://www.cnblogs.com/shujuxiong/p/9766639.html
+ras-api的编辑表对应的alter语句
+alter table replace columns(...
+这种alter语句可以替换所有的列，符合ras-api的编辑表方法
+ex.
+alter table test replace columns(a int)
