@@ -8,3 +8,6 @@ alter table test replace columns(a int)
 
 注意，alter表，必须先use 数据库，否则会报错
 ![](https://github.com/lasdf1234/Study/tree/master/%E5%AD%A6%E4%B9%A0/HIVE/image/111.png)
+
+注意：
+alter表，分区是不能编辑的，除非把表的结构TableType改为VIRTUAL_VIEW才可以
