@@ -1,0 +1,2 @@
+对应关系
+HiveOperation这个类
