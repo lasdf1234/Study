@@ -1,0 +1,118 @@
+HCATALOG
+https://blog.csdn.net/a822631129/article/details/49003069
+  HCatalog提供了并行输入和输出的数据传输API，这个API提供了一种方法从一个Hadoop集群来读取数据或者写数据到Hadoop集群。
+  数据传输API有三个重要的类
+  1、HCatReader-从一个Hadoop集群读取数据
+  2、HCatWriter-写数据到Hadoop集群
+  3、DataTransferFactory-生成读和写的实例
+  
+  数据传输API辅助类包括
+  ReadEntity
+  ReaderContext
+  WriteEntity
+  WriterContext
+  
+  注意Hcatalog不是线程安全的。
+
+HCatReader
+  Reading是一个两步的过程中，第一步发生在主节点。第二步是在多个从节点并行完成的。
+  Reades在"ReadEntity"上完成。在你开始进行读操作之前，您需要定义一个ReadEntity（使用ReadEntity Builder），可以指定一个数据库名、表名，分区和过滤的字符串。
+  例如：
+  ReadEntity.Builder builder = new ReadEntity.Builder();
+  ReadEntity entity = builder.withdatabase("mydb).withTable("mytbl").build();
+  
+  上边的代码定义了一个ReadEntity对象("entity")，包括数据库名为"mydb"，表名为"mytbl"。可以来读表的所有数据，注意的是这个表在进行操作之前需要存在。
+  定义一个ReadEntity之后，通过ReadEntity和集群配置来获得HcatReader的实例；
+  
+  HCatReader reader = DataTransferFactory.getHCatReader(entity,config);
+  
+  下一步是通过reader来获得ReadContext如下：
+  ReaderContext cntxt = reader.prepareRead();
+  
+  上述所有步骤都发生在主节点。主节点然后序列化ReaderContext对象并将其发送给所有从节点。
+  从节点然后使用读者上下文读取数据
+  for (InputSplit split : readCntxt.getSplits()) {
+    HCatReader reader = DataTransferFactory.getHCatReader(split, readerCntxt.getConf());
+    Iterator<HCatRecord> itr = reader.read();
+    while(itr.hasNext()) {
+      HCatRecord read = itr.next();
+    }
+  }
+  
+  // 注意
+  readCntxt.getSplits()为了获得mapper的任务数量，即确定map数。
+  
+HCatWriter
+  类似于Reading Writing也是一个两步的过程中，第一步发生在主节点上。随后，第二步在从节点上并行发生。写操作在"WriteEntity"上完成，可以构建上类似读操作的过程
+  WriteEntity.Builder builder = new WriteEntity.Builder();
+  WriteEntity entity = builder.withDatabase("mydb").withTable("mytbl").build();
+  
+  创建WriteEntity后，下一步是获取WriteContext;
+  
+  HCatWriter writer = DataTransFactory.getHCatWriter(entity,config);
+  WriteContext info = writer.prepareWrite();
+  
+  上述所属步骤都发生在主节点。主节点然后序列化WriterContext对象并使其可用于所有的从节点。在从节点，使用WriterContext来获得HCatWriter：
+  HCatWriter writer = DataTransferFactory.getHCatWriter(context);
+  
+  然后writer调用write接口hCatRecordItr迭代器作为参数进行写操作
+  writer.write(hCatRecordItr);
+  
+  write然后调用 getNext()在这个迭代器在一个循环中，写出所有的记录。
+  
+  一个例子：
+  packge...
+  
+  import...
+  
+  public class TestReaderWriter extends HcatBaseTest {
+    
+    @Test
+    public void test() throws MetaException, ComandNeedRetryException, IOException,ClassNotFoundException {
+      driver.run("drop table mytbl);
+      driver.run("create table mytbl (a string, b int)");
+      Iterator<Entry<String, String>> itr = hiveConf.iterator();
+      Map<String, String> map = new HashMap<String, String>();
+      while(itr.hasNext()) {
+        Entry<String, String> kv = itr.next();
+        map.put(kv.getKey(), kv.getValue());
+      }
+      
+      WriterContext cn txt = runsInMaster(map);
+      File writeCntxtFile = File.createTempFile("hcat write", "temp");
+      writeCntxtFile.deleteOnExit();
+      
+      // Serialize context
+      ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(writeCntxtFile));
+      oos.writeObject(cntxt);
+      oos.flush();
+      oos.close();
+      
+      // Now, deserialize it.
+      ObjectInputStream ois = new ObjectInputStream(new FileInputStream(writeCntxtFile);
+      cntxt = (WriterContext)
+      ois.readObject();
+      ois.close();
+      
+      runsInSlave(cntxt);
+      commit(map, true, cntxt);
+      
+      ReaderContext readCntxt= runsInMaster(map, false);
+      
+      File readCntxtFile = File.createTempFile("hcat-read","temp");
+      readCntxtFile.deleteOnExit();
+      oos = new ObjectOutputStream(new FileOutputStream(readCntxtFile));
+      oos.writeObject(readCntxt);
+      oos.flush();
+      oos.close();
+      
+      ois = new ObjectInputStream(new FileInputStream(readCntxtFile));
+      readCntxt = (ReaderContext) ois.readObject();
+      ois.close();
+      for ( int i = 0 ; i < readCntxt.numSplits(); i++) {
+        runsInSlave(readCntxt,i);
+      }
+    }
+      
+    
+    
