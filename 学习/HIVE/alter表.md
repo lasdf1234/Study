@@ -11,3 +11,6 @@ alter table test replace columns(a int)
 
 注意：
 alter表，分区是不能编辑的，除非把表的结构TableType改为VIRTUAL_VIEW才可以
+
+注意：
+hive的statement不支持addBatch
