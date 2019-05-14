@@ -1,0 +1,21 @@
+反引号
+  在MySQL语句中我们有时会经常遇到反引号(``)，刚开始的时候不知道什么意思，他是什么作用呢？
+  SELECT * FROM `member` order by posts desc limit 0,10;
+  它是为了区分MYSQL的保留字与普通字符而引入的符号。
+  
+  举个例子：SELECT `select` FROM `test` WHERE select='字段值'
+  在test表中，有个select字段，如果不用反引号，MYSQL将把select视为保留字而导致出错，所以，有MYSQL保留字作为字段的，必须加上反引号来区分。
+  
+  引号一般用在字段的值，如果字段值是字符或者字符串，则要加引号，如：select='字段值'
+  
+  不加反引号建的表不能包含MYSQL保留字，否则出错。
+  保留字不能用于表名，比如desc，此时需要加入反引号来区别，但使用表名时可忽略反引号。
+  create table desc报错
+  create table `desc`成功
+  保留字不能用于字段名，比如desc，此时也需要加入反引号，并且insert等使用时也要加上反引号。
+  create table abc(`desc` varchar(255)) 成功
+  create table abc(desc varchar(255)) 失败
+  insert into test(desc) values('fxf') 失败
+  insert into test(`desc`) values('fxf')成功
+  
+  
