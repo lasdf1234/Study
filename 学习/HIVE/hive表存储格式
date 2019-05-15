@@ -1,1 +1,6 @@
 https://blog.csdn.net/qq_31807385/article/details/84796880
+备注：
+HIVE表，通过执行insert into的sql会在TABLE_PARAMS这个表里面存储totalSize，可以实时取表的大小。
+但是，只有sql会触发，dbus不行。
+
+有趣的是，spark sql的insert语句，与dbus相比，存储同样大小的数据，占用的空间更多
